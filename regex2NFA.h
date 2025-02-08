@@ -25,8 +25,9 @@ class NFA{
     void print();
     void reToNfa(string re);
     void unionFunction(state startState, state finalState);
-    void concatFuntion(int startState, int finalState, char charToMoveOn);
-    void kleeneStarFunction(int startState, int finalState, char charToMoveOn);
+    void concatFuntion(state startState, state stateTwo);
+    void kleeneStarFunction(state startState);
+    void updateNames(state stateOne, state stateTwo); 
 };
 
 

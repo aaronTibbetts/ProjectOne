@@ -8,7 +8,10 @@ using namespace std;
 
 int main (){
     NFA graph;
-    string RE = "ab|";
-    graph.reToNfa(RE);
+    string RE = "((a)*).(a)";
+    string postFix = infixToPostfix(RE);
+    cout << infixToPostfix(RE);
+
+    graph.reToNfa(postFix);
     graph.print();
 }
