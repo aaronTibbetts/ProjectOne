@@ -1,17 +1,30 @@
 #include <iostream>
 #include <string>
+#include <vector>
 #include "lexer.h"
-#include "shunting.h"
-#include "regex2NFA.h"
+//#include "shunting.h"
+//#include "regex2NFA.h"
 
 using namespace std; 
 
 int main (){
-    NFA graph;
-    string RE = "((a)*).(a)";
-    string postFix = infixToPostfix(RE);
-    cout << infixToPostfix(RE);
+    string input;
+    getline(cin, input);
+    Lexer lexer(input);
 
-    graph.reToNfa(postFix);
-    graph.print();
+    Token token;
+
+    vector <Token> tokenNames; 
+    vector <Token> regexs;
+
+    while((token = lexer.getToken()).tokenType != EOS){
+        if(token.tokenType == ID){
+            tokenNames.push_back(token);
+        } else if(token.tokenType == REGEX){
+            regexs.push_back(token);
+        }
+
+    }
+
+    return 0;
 }

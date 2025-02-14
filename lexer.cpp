@@ -5,34 +5,41 @@
 
 using namespace std; 
 
-int position = 0;
 
-Lexer::Lexer(string input, char tokenTypes[]) {
+
+Lexer::Lexer(string input) {
     userInput = input; 
-    for(int i = 0; i < 3; i++ ){
-        tokens[i] = tokenTypes[i];
-    }
+    position = 0;
 
 }
 
-string Lexer :: getToken(){
-    while(position < userInput.length()){
-        if(position == userInput.length()){
-            return " ";
+Token Lexer :: getToken(){
+    while(position < userInput.size()){
+        char charToLook = userInput[position];
+
+        if((userInput[position]  == userInput.size()) && (userInput[position]  == '#')){
+            return Token(EOS, "");
         }
 
-        if(tokens[0] == userInput[position]){
-            cout<<"token 1";
-        } else if(tokens[1] == userInput[position]){
-            cout<<"token 2";
-        } else if(tokens[2] == userInput[position]){
-            cout<<"token 3";
+        if(charToLook == 't'){
+            string tokenName;
+            while((position < userInput.size()) && userInput[position] != ' '){
+                tokenName += userInput[position++]; 
+            }
+            return Token(ID, tokenName);
+
+        } else if(isalpha(charToLook) || charToLook == '(' ){
+            string regex;
+            while((position < userInput.size()) && userInput[position] != ' '){
+                regex += userInput[position++];
+            }
+            return Token(REGEX, regex);
+        } else if(charToLook == ' ' || charToLook == ','){
+            //do nothing 
         } else {
-            cout<< "Error";
+            return Token(INVALID, "");
         }
         position++;
 
     }
-        return "all done ";
-
 }
