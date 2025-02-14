@@ -4,32 +4,16 @@
 #include <stack>
 #include <list>
 #include <iostream>
+#include "NFA.h"
 
-using namespace std;
-
-enum typesOfStates{
-    IMPORTANT,
-    EPSILON 
-};
-
-struct state{
-    int name;
-    typesOfStates stateType;
-    char charToMoveOn;
-    int nextStates[2];
-};
-
-class NFA{
-    public:
-    stack <state> stacks;
+using std:: string;
+using std:: stack;
+    
     void print();
-    void reToNfa(string re);
-    void unionFunction(state startState, state finalState);
-    void concatFuntion(state startState, state stateTwo);
-    void kleeneStarFunction(state startState);
-    void updateNames(state stateOne, state stateTwo); 
-};
-
+    NFA reToNfa(string re);
+    NFA unionFunction(NFA &nfaOne, NFA nfaTwo, stack<char>symbols);
+    NFA concatFuntion(NFA &nfaOne, NFA nfaTwo, stack<char> symbols);
+    NFA kleeneStarFunction(NFA &nfaOne, stack<char> symbols);
 
 
 

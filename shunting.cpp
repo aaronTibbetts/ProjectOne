@@ -23,7 +23,7 @@ bool isOperand(char c){
 }
 
 string infixToPostfix(string infix){
-    string postfix = " "; 
+    string postfix; 
     stack <char> stack;
 
     for (size_t i = 0; i <infix.size(); i++ ){

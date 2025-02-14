@@ -1,148 +1,128 @@
 #include "regex2NFA.h"
 #include <stack>
-using namespace std; 
+
+int count = 0;
 
 
-
-
-void NFA :: print(){
-    while(!stacks.empty()){
-        state tmp = stacks.top();
-        cout << tmp.name << "-> " << tmp.charToMoveOn << " " << tmp.nextStates[0];
-        if(tmp.nextStates[1] != 999999){
-            cout <<" "<<tmp.nextStates[1];
-        }
-        cout << endl;
-        stacks.pop();
-    }
-}
-
-void NFA :: reToNfa(string regex){
-    int count = 0;
+NFA reToNfa(string regex){
+    std:: stack<NFA> nfaStack;
+    std:: stack<char> seenSymbols;
+    std :: stack<char> seenOperands; 
     for (int i = 0; i < regex.length(); i++){
+        
+        char regexChar = regex[i];
+
         if(isalpha(regex[i])){
-            state newState;
-            newState.charToMoveOn = regex[i];
-            newState.name = count;
-            newState.stateType = IMPORTANT;
-            newState.nextStates[0] = count+1;
-            newState.nextStates[1] = 999999;
-            stacks.push(newState);
-            count++;
+            std:: set<char> alphabet;
+            alphabet.insert(regexChar);
+            set<int> finalStates;
+            finalStates.insert(count+1);
+            NFA tmp(alphabet, count, finalStates);       
+            tmp.addTransition(count,finalStates, regexChar);
+            nfaStack.push(tmp);
+            seenSymbols.push(regexChar);
+            count+=2; 
+
         } else if (regex[i] == '|'){
-            state tmpStateTwo = stacks.top();
-            stacks.pop();
-            state tmpStateOne = stacks.top();
-            stacks.pop();
-            unionFunction(tmpStateOne, tmpStateTwo);
-            count+=4;
+            NFA nfaTwo = nfaStack.top();
+            nfaStack.pop();
+            NFA nfaOne = nfaStack.top();
+            nfaStack.pop();
+            NFA newNFA = unionFunction(nfaOne,nfaTwo,seenSymbols);
+            nfaStack.push(newNFA);
+            seenOperands.push(regexChar);
+            count+=2; 
         } else if (regex[i] == '.'){
-            state tmpStateTwo = stacks.top();
-            stacks.pop();
-            state tmpStateOne = stacks.top();
-            stacks.pop();
-            concatFuntion(tmpStateOne, tmpStateTwo);
+            NFA nfaTwo = nfaStack.top();
+            nfaStack.pop();
+            NFA nfaOne = nfaStack.top();
+            nfaStack.pop();
+            NFA newNFA = concatFuntion(nfaOne, nfaTwo, seenOperands);
+            nfaStack.push(newNFA);
+            seenOperands.push(regexChar);
+            count --;
         } else if (regex[i] == '*'){
-            state tmpState = stacks.top();
-            stacks.pop();
-            kleeneStarFunction(tmpState);
-            count++;
+            NFA nfaOne = nfaStack.top();
+            nfaStack.pop();
+            NFA newNFA = kleeneStarFunction(nfaOne, seenSymbols);
+            nfaStack.push(newNFA);
+            seenOperands.push(regexChar);
+            count += 2;
         }
     }
+    return nfaStack.top();
 }
 
-void NFA :: unionFunction(state startState, state finalState){
-    state newStartingState;
-    newStartingState.charToMoveOn = '_';
-    newStartingState.name = startState.name;
-    newStartingState.stateType = EPSILON;
+NFA unionFunction(NFA &nfaOne, NFA nfaTwo, std::stack<char> seenSymbols){
+    set<char> alphabetOne = nfaOne.getAlphabet();
+    set<char> alpahbetTwo = nfaTwo.getAlphabet();
+    set<char> newAlphabet;
+    newAlphabet.insert(alphabetOne.begin(), alphabetOne.end());
+    newAlphabet.insert(alpahbetTwo.begin(), alpahbetTwo.end()); 
 
-    startState.name = startState.nextStates[0];
-    finalState.name = finalState.nextStates[0];
+    set<int> newFinalState = {count +1};
 
-    newStartingState.nextStates[0] = startState.name;
-    newStartingState.nextStates[1] = finalState.name;
+    NFA unionNFA (newAlphabet,nfaOne.getInitialState(),newFinalState);
+
+    nfaOne.setInitialState(nfaOne.getInitialState() +1);
+    nfaTwo.setInitialState(nfaTwo.getInitialState() + 1);
+
+    nfaOne.incrementFinalState(1);
+    nfaTwo.incrementFinalState(1);
+
+    char nfaTwoSymbol = seenSymbols.top();
+    seenSymbols.pop();
+    char nfaOneSymbol = seenSymbols.top();
+    seenSymbols.pop(); 
+
+    unionNFA.addTransition(unionNFA.getInitialState(),{nfaOne.getInitialState(),nfaTwo.getInitialState()}, '_'); //set start state's transitions by _
+    unionNFA.addTransition(nfaOne.getInitialState(), nfaOne.getFinalStates(), nfaOneSymbol); // 1->2 a
+    unionNFA.addTransition(nfaTwo.getInitialState(), nfaTwo.getFinalStates(), nfaTwoSymbol); //3->4 b
+    unionNFA.addTransition(count-2, newFinalState, '_'); //2->5 _
+    unionNFA.addTransition(count, newFinalState, '_'); //4->5 _
     
-    if(startState.nextStates[1] == 999999){
-        startState.nextStates[0] = startState.nextStates[0] + 2;
-    } else if(startState.nextStates[1] < startState.nextStates[0]){
-         startState.nextStates[0] = startState.nextStates[0] + 1;
-    } else {
-        startState.nextStates[0] = startState.nextStates[1];
-    }
+    return unionNFA;
     
-     if(finalState.nextStates[1] == 999999){
-        finalState.nextStates[0] = finalState.nextStates[0] + 2;
-    } else if(finalState.nextStates[1] < finalState.nextStates[0]){
-         finalState.nextStates[0] = finalState.nextStates[0] + 1;
-    } else {
-        finalState.nextStates[0] = finalState.nextStates[1];
-    }
+}
 
-    state secondState;
-    secondState.charToMoveOn = '_';
-    secondState.name = startState.nextStates[0] + 2;
-    secondState.stateType = EPSILON;
-    secondState.nextStates[0] = finalState.nextStates[0] + 2;
-    secondState.nextStates[1] = 999999;
+NFA concatFuntion(NFA &nfaOne, NFA nfaTwo, std::stack<char> operands){
+    set<char> nfaOneAlphabet = nfaOne.getAlphabet();
+    set<char> nfaTwoAlphabet = nfaTwo.getAlphabet();
+    nfaOneAlphabet.insert(nfaTwoAlphabet.begin(), nfaTwoAlphabet.end());
 
-    startState.nextStates[1] = secondState.name;
-    finalState.nextStates[1] = secondState.name;
+    char symbol = nfaTwo.getSymbol(nfaTwo.getInitialState());
+    //char secondSymbol = operands.top();
 
-    stacks.push(newStartingState);
-    stacks.push(startState);
-    stacks.push(finalState);
-    stacks.push(secondState);
+
    
+    //nfaOne.addTransition(*nfaOne.getFinalStates().begin(), {nfaTwo.getInitialState()},symbol );
+
+    nfaTwo.updateKeysAndValues(-1);
+
+    map<int,  map <char,set<int>>> nfaTwoGraph = nfaTwo.getGraph();
+    map<int,  map <char,set<int>>> nfaOneGraph = nfaOne.getGraph();
+
+    nfaOneGraph.insert(nfaTwoGraph.begin(), nfaTwoGraph.end());
+    nfaOne.setGraph(nfaOneGraph);
+    
+    nfaOne.setFinalState(*nfaTwo.getFinalStates().begin()-1);
+
+    return nfaOne;
+   
+
 }
 
-void NFA :: concatFuntion(state stateOne, state stateTwo){
-    //add new initial state, add e tran from new start to state one add each e tran from state one to state two
+NFA kleeneStarFunction(NFA &nfaOne, stack<char> symbols){
+    nfaOne.incrementFinalState(2);
+    set<int> nfaOneFinalStates = nfaOne.getFinalStates();
+    char symbol = symbols.top();
+    symbols.pop();
+    nfaOneFinalStates.insert(nfaOne.getInitialState()+1);
+
+    nfaOne.updateKeysAndValues(1);
+    nfaOne.addTransition(nfaOne.getInitialState(),nfaOneFinalStates, '_'); // 0->1 _
+    nfaOne.addTransition(count,{count+1, nfaOne.getInitialState()+1}, '_'); //6->7 and 1 
+
     
-    state newState;
-    newState.charToMoveOn = '_';
-    newState.name = stateTwo.name;
-    newState.stateType = EPSILON;
-    newState.nextStates[0] = stateTwo.nextStates[0];
-    newState.nextStates[1] = 999999;
-
-    stateOne.nextStates[0] = stateTwo.name;
-
-
-    stateTwo.name = newState.nextStates[0];
-
-    if(stateTwo.nextStates[1] == 999999){
-        stateTwo.nextStates[0]  = stateTwo.nextStates[0] + 1;
-    } else {
-        stateTwo.nextStates[0] = stateTwo.nextStates[1];
-    }
-    
-    stacks.push(stateOne);
-    stacks.push(newState); 
-    stacks.push(stateTwo);
-}
-
-void NFA :: kleeneStarFunction(state stateOne){
-    state newState;
-    newState.charToMoveOn = '_';
-    newState.name = stateOne.name;
-    newState.stateType = EPSILON;
-
-    stateOne.name = stateOne.nextStates[0];
-    newState.nextStates[0] = stateOne.name;
-    newState.nextStates[1] = 999999;
-
-
-    if(stateOne.nextStates[1] == 999999){
-        stateOne.nextStates[0] = stateOne.nextStates[0] + 1;
-    } else {
-        stateOne.nextStates[0] = stateOne.nextStates[1];
-    }
-
-    stateOne.nextStates[1] = newState.name;
-
-    stacks.push(newState);
-    stacks.push(stateOne);
-    
-
+    return nfaOne;
 }

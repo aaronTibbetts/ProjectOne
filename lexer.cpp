@@ -17,7 +17,7 @@ Token Lexer :: getToken(){
     while(position < userInput.size()){
         char charToLook = userInput[position];
 
-        if((userInput[position]  == userInput.size()) && (userInput[position]  == '#')){
+        if(userInput[position]  == '#'){
             return Token(EOS, "");
         }
 
