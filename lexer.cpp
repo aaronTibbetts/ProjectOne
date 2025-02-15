@@ -6,13 +6,13 @@
 using namespace std; 
 
 
-
+//lexer constructor
 Lexer::Lexer(string input) {
     userInput = input; 
     position = 0;
 
 }
-
+//goes through first input of tokens and generates each token name and expression
 Token Lexer :: getToken(){
     while(position < userInput.size()){
         char charToLook = userInput[position];

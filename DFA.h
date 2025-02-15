@@ -3,6 +3,8 @@
 #include <set>
 #include <map>
 #include <string>
+#include "NFA.h"
+
 
 enum DFAstatus {
     START, 
@@ -22,6 +24,8 @@ public:
     std::string GetAcceptedLexeme();
     bool GetAccepted();
     void Print();
+    DFA nfaToDfa (NFA nfaToConvert);
+    bool containsFinalState(set<int> f, int finalStates);
 private:
     std::map< int, std::map<char, int> > Dtran;
     DFAstatus status;

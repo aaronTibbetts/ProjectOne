@@ -1,7 +1,7 @@
 #include "shunting.h"
 
 using namespace std; 
-
+//checks precedence of operator 
 int precedence(char op){
     if (op == '*'){
         return 3;
@@ -17,11 +17,11 @@ int precedence(char op){
 
     return 0; 
 }
-
+//returns if c is an operand (a letter)
 bool isOperand(char c){
     return isalpha(c); 
 }
-
+//turns a string from infix to postfix
 string infixToPostfix(string infix){
     string postfix; 
     stack <char> stack;
